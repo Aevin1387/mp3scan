@@ -5,10 +5,20 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <errno.h>
+//#include "/usr/local/include/taglib/taglib.h"
+//#include "/usr/local/include/taglib/fileref.h"
+#include <id3/misc_support.h>
+#include <id3/tag.h>
+
 
 typedef struct MP3NODE{
 	char file_name[255];
 	struct MP3NODE* next;
+	ID3_Tag songTag;
+	//TagLib::FileRef songFile;
+	char title[511];
+	char artist[511];
+	char album[511];
 } mp3_node;
 
 typedef struct {
@@ -18,6 +28,10 @@ typedef struct {
 }mp3_list;
 
 mp3_list* mp3list;
+
+void fillMp3Data(mp3_node* dataNode){
+	
+}
 
 void get_mp3s(char* directory){
 	struct dirent** directory_list;
@@ -53,6 +67,8 @@ void get_mp3s(char* directory){
 				if(!strcmp(directory_list[n]->d_name + start_ext, ".mp3")){
 					mp3_node* mp3node = (mp3_node*)malloc(sizeof(mp3_node));
 					strncpy(mp3node->file_name, directory_list[n]->d_name, 255);
+					//TagLib::FileRef f(mp3node->file_name);
+					mp3node->songTag.Link(mp3node->file_name);
 					if(mp3list->head == NULL){
 						mp3list->head = mp3node;
 						mp3list->tail = mp3node;
@@ -83,7 +99,7 @@ int main() {
 	
 	if(!getcwd(current_path, PATH_MAX)){
 		printf("ERROR!");
-		return;
+		return 1;
 	}
 	
 	init_list();
@@ -93,7 +109,7 @@ int main() {
 	
 	if(answer != 'Y' && answer != 'y'){
 		printf("Please run this application from the directory you want to use as the starting scan directory.");
-		return;
+		return -1;
 	}
 	
 	get_mp3s(current_path);
@@ -101,12 +117,15 @@ int main() {
 	if(mp3list->head == NULL){
 		printf("No mp3s found!");
 	}else{
+		char* artist;
 		mp3_node* curr = mp3list->head;
 		while(curr != NULL){
 			printf("%s\n", curr->file_name);
+			if(artist = ID3_GetArtist(&(curr->songTag)))
+				printf("Artist: %s\n", artist);
 			curr = curr->next;
 		}
 	}
 	
-	
+	return 0;
 }
